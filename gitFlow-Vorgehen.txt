@@ -1,0 +1,48 @@
+# Nie in main eigentlich arbeiten, immer nur in
+    # develop oder *        --> dann in main und git merge develop 
+    # feature/*             --> dann in develop und git merge feature/*
+
+
+# develop-Branch erstellen
+git checkout -b develop
+git push -u origin develop
+
+# feature-Branch starten auf Basis von develop
+git checkout -b feature/xyz develop
+(git merge develop)   # auf aktuellen stand holen
+
+# Änderungen committen und mergen
+git add .
+git commit -m "Feature xyz" und pushen
+git checkout develop
+git merge feature/xyz
+
+# feature-Branch löschen
+git branch -d feature/xyz
+
+
+# release-branch vorgehen:
+git checkout develop
+git pull origin develop       # sicherstellen, dass du aktuell bist
+
+git checkout -b release/1.0.0   # in pubsec.yaml App-Version entsrprechend erhöhen
+
+
+# Hotfix -Branches (auf Basis von main)
+git checkout -b hotfix/fix-pdf... main
+
+
+
+# Weitere Befehle
+
+# Holt die aktuellste Version von allen Branches
+git fetch origin
+
+# Listet alle verfügabren Branches auf
+git branch
+
+# Erstmaliges pushen mit Definieren des Upstreams(damit merkt sich Github welcher Branch offline zu online gehört) --> es reicht git pull und git push in der Folge !!
+git push -u origin branchname
+
+# Anzeigen der Upstream-Verbindungen
+git branch -vv
