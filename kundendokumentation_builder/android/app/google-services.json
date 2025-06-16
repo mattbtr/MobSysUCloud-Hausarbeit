@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "957014099726",
+    "project_id": "kundendokumentation-builder",
+    "storage_bucket": "kundendokumentation-builder.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957014099726:android:fd38809e567a38b220f95f",
+        "android_client_info": {
+          "package_name": "com.example.kundendokumentation_builder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRoM9ALLfZmq7bPowkHMNV6QdBgx8RBAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

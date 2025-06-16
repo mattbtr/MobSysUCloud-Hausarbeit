@@ -92,6 +92,7 @@ firebase.json
 *.firebase
 firebase_options.dart
 
+
 # Google Services
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
