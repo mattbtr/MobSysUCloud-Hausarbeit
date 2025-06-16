@@ -111,3 +111,8 @@ migrate_working_dir/
 *.GeneratedPluginRegistrant.swift
 *.generated_plugin_registrant.cc
 *.generated_plugins.cmake
+kundendokumentation_builder/.flutter-plugins
+kundendokumentation_builder/.flutter-plugins-dependencies
+kundendokumentation_builder/macos/Flutter/GeneratedPluginRegistrant.swift
+kundendokumentation_builder/windows/flutter/generated_plugin_registrant.cc
+kundendokumentation_builder/windows/flutter/generated_plugins.cmake
