@@ -32,8 +32,9 @@ class LoginScreen extends StatelessWidget {
                 .trim(), // .trim() entfernt Leerzeichen vorne und hinten ams String
       );
     } catch (e) {
-      if (!context.mounted)
+      if (!context.mounted) {
         return; // schützt vor ungültigem Kontext --> Sicherstellen, dass das Widget noch im Widget-Baum vorhanden ist.
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'add_notes_screen.dart';
+// ignore: unused_import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
@@ -8,142 +8,108 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static final logger = Logger();
-  /*
-  //final List<String> dummyNotes = [
-    'Einkaufsliste schreiben',
-    'Projektbesprechung am Montag',
-    'Flutter ausprobieren'
-  ];  // Platzhalter-Daten, später ersetzen mit Cloud Firestore
-  */
+
+  void _navigateTo(BuildContext context, String route) {
+    Navigator.pushNamed(context, route);
+  }
 
   void logout() {
-    //print("Aktuelle UID: ${FirebaseAuth.instance.currentUser?.uid}");
     HomeScreen.logger.i(
       "Aktuelle UID: ${FirebaseAuth.instance.currentUser?.uid}",
     );
     FirebaseAuth.instance.signOut();
   }
 
+  void _openCamera(BuildContext context) {
+    //  Kamera-Funktion implementieren
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userEmail = FirebaseAuth.instance.currentUser?.email ?? 'Unbekannt';
-    //final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text("My Notes"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.maybePop(context);
+          },
+        ),
+        title: const Text('Dashboard'),
         actions: [
-          IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
-        ],
-      ),
-
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Welcome, $userEmail',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance
-                      .collection('notes')
-                      .where(
-                        'userId',
-                        isEqualTo: FirebaseAuth.instance.currentUser!.uid,
-                      )
-                      .orderBy('timestamp', descending: true)
-                      .snapshots(),
-
-              builder: (context, snapshot) {
-                // Ladeanzeige, wenn Daten geladen werden
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                // Leerer Zustand
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text('No Notes there'));
-                }
-
-                // Zugriff auf die Dokumente aus Firestore
-                final notes = snapshot.data!.docs;
-                // Liste aller Notizen anzeigen
-                return ListView.builder(
-                  itemCount: notes.length,
-                  itemBuilder: (context, index) {
-                    final note = notes[index];
-                    final noteId = note.id;
-                    final noteData = note.data() as Map<String, dynamic>;
-                    final noteText = noteData['text'] ?? 'Not found the note';
-
-                    return Dismissible(
-                      key: Key(noteId),
-                      direction: DismissDirection.horizontal,
-                      onDismissed: (_) async {
-                        await FirebaseFirestore.instance
-                            .collection('notes')
-                            .doc(noteId)
-                            .delete();
-
-                        if (!context.mounted)
-                          return; //schützt vor ungültigem Kontext, d.h. wenn Context null ist
-                        // z.b Scaffoldmessage anzeigen von context der null ist führt zum Absturz
-
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('note deleted')));
-                      },
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.center,
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Icon(Icons.delete, color: Colors.white),
-                      ),
-
-                      child: ListTile(
-                        title: Text(noteText),
-                        trailing: IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => AddNoteScreen(
-                                      existingNoteId: note.id,
-                                      initialText: noteData['text'],
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
-                        // Wenn ich will noch mehr Informationen anzeigen wie timestamp??
-                      ),
-                    );
-                  }, //Itembuilder
-                );
-              },
-            ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () => logout(),
           ),
         ],
       ),
-
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            _HomeButton(
+              icon: Icons.cloud_upload,
+              label: 'Datenupload',
+              onTap: () => _navigateTo(context, '/upload'),
+            ),
+            const SizedBox(height: 15),
+            _HomeButton(
+              icon: Icons.description,
+              label: 'Berichte Übersicht',
+              onTap: () => _navigateTo(context, '/reports'),
+            ),
+            const SizedBox(height: 15),
+            _HomeButton(
+              icon: Icons.search,
+              label: 'Spezifischen Bericht suchen',
+              onTap: () => _navigateTo(context, '/search-report'),
+            ),
+            const SizedBox(height: 15),
+            _HomeButton(
+              icon: Icons.person,
+              label: 'Profil',
+              onTap: () => _navigateTo(context, '/profile'),
+            ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddNoteScreen(),
-            ), // Wechselt zur Eingabemaske
-          );
-        },
-        child: Icon(Icons.add),
+        onPressed: () => _openCamera(context),
+        tooltip: 'Kamera öffnen',
+        child: const Icon(Icons.camera_alt),
       ),
     );
   }
 }
+
+class _HomeButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _HomeButton({
+    // ignore: unused_element_parameter
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton.icon(
+        icon: Icon(icon, size: 28),
+        label: Text(label, style: const TextStyle(fontSize: 18)),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          alignment: Alignment.centerLeft,
+        ),
+        onPressed: onTap,
+      ),
+    );
+  }
+}
+
