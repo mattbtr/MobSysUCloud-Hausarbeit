@@ -37,4 +37,5 @@ void main() async {
   runApp(const MainApp());
 }
 
-
+// TODO: wenn zeit:2fa einrichtung verfügbar machen mit firebase_auth
+// TODO: wenn zeit:passswortzurücksetzun verfürbar machen mit firebase_auth
