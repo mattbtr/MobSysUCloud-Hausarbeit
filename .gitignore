@@ -106,8 +106,32 @@ app.*.map.json
 
 # Migration helper
 migrate_working_dir/
+*.flutter-plugins
+*.flutter-plugins-dependencies
+*.GeneratedPluginRegistrant.swift
+*.generated_plugin_registrant.cc
+*.generated_plugins.cmake
 kundendokumentation_builder/.flutter-plugins
 kundendokumentation_builder/.flutter-plugins-dependencies
 kundendokumentation_builder/macos/Flutter/GeneratedPluginRegistrant.swift
 kundendokumentation_builder/windows/flutter/generated_plugin_registrant.cc
 kundendokumentation_builder/windows/flutter/generated_plugins.cmake
+
+# Flutter/Dart generierte Dateien
+**/GeneratedPluginRegistrant.dart
+**/generated_plugin_registrant.dart
+
+# Build-Ordner und generierte Dateien
+/build/
+/android/app/build/
+/ios/Runner.build/
+/web/generated_plugin_registrant.dart
+
+# IntelliJ/VSCode/IDE
+.idea/
+.vscode/
+
+# Sonstige generierte Dateien
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages

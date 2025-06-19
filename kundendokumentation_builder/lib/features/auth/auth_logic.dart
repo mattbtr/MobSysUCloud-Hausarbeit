@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Zugriff auf Firebase Authentication (Login, Logout, Registry)
-import '../home_screen.dart'; // importiert HomeScreen der angezeigt wird wenn angemeldet
+import '../home/home_screen.dart'; // importiert HomeScreen der angezeigt wird wenn angemeldet
 import 'login_screen.dart'; // importiert LoginScreen, der standardweise angezeigt wird wenn nicht angemeldet
 
 class AuthLogic extends StatelessWidget {
