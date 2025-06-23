@@ -1,6 +1,7 @@
 // // zentrale Route-Konfiguration
 import 'package:flutter/material.dart';
 import 'package:kundendokumentation_builder/features/home/home_screen.dart';
+import 'package:kundendokumentation_builder/features/report/create_report.dart';
 import 'package:kundendokumentation_builder/features/upload/upload_screen.dart';
 import 'package:kundendokumentation_builder/features/report/reports_screen.dart';
 import 'package:kundendokumentation_builder/features/report/report_detail_screen.dart';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const reports = '/reports';
   static const reportDetail = '/report_detail';
   static const profile = '/profile';
+  static const createReport = '/create_report';
   // usw.
 
   static Map<String, WidgetBuilder> routes = {
@@ -19,6 +21,7 @@ class AppRoutes {
     upload: (_) => const UploadScreen(),
     reports: (_) => const ReportsOverviewScreen(),
     profile: (_) => const ProfileScreen(),
+    createReport: (_) => const CreateReportScreen(),
     
     reportDetail: (context){
       final args = ModalRoute.of(context)?.settings.arguments;

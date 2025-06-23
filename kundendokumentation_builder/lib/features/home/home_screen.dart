@@ -61,8 +61,8 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 15),
             _HomeButton(
               icon: Icons.search,
-              label: 'Spezifischen Bericht suchen',
-              onTap: () => _navigateTo(context, '/search-report'),
+              label: 'Bericht erstellen via Formular',
+              onTap: () => _navigateTo(context, '/create_report'),
             ),
             const SizedBox(height: 15),
             _HomeButton(

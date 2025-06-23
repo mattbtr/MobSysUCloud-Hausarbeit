@@ -23,5 +23,5 @@ class Bericht(Base):
     nutzer_name = Column(String, nullable=True)
     nutzer_email = Column(String, nullable=True)
 
-    # Liste von Einträgen zum Bericht
+    # Liste von Einträgen zum Bericht z.b auch Bilder
     eintraege = relationship("Eintrag", back_populates="bericht", cascade="all, delete-orphan")

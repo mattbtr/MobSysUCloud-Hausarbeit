@@ -66,8 +66,7 @@ class Anlage(AnlageBase):
 
 class BerichtBase(BaseModel):
     titel: str
-    inhalt: str
-    datum: datetime
+    beschreibung: str
     anlage_id: int
 
 class BerichtCreate(BerichtBase):
@@ -75,7 +74,23 @@ class BerichtCreate(BerichtBase):
 
 class Bericht(BerichtBase):
     id:int
-    created_at: datetime
+    erstellt_am: datetime
+
+    class Config:
+        from_attributes = True
+
+class EintragBase(BaseModel):
+    titel: str
+    beschreibung: Optional[str] = None
+    wert: Optional[str] = None
+    bericht_id: int
+
+class EintragCreate(EintragBase):
+    pass
+
+class Eintrag(EintragBase):
+    id: int
+    erstellt_am: datetime
 
     class Config:
         from_attributes = True
