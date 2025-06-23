@@ -7,3 +7,4 @@ class Kunde(Base):
     __tablename__ = "kunden"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    adresse = Column(String)

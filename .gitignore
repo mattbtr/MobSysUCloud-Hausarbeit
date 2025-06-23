@@ -135,3 +135,7 @@ kundendokumentation_builder/windows/flutter/generated_plugins.cmake
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+
+
+# Service Account Firebase Token Auth
+kundendokumentation-builder-1487ddaf5b1c.json

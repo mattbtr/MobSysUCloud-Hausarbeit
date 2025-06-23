@@ -10,7 +10,7 @@ import sys
 # Pfad zum Hauptverzeichnis hinzufügen (ein Verzeichnis über alembic/)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.models import Base  
+from app.database import Base  
 
 
 # this is the Alembic Config object, which provides
