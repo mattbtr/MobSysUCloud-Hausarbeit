@@ -5,14 +5,12 @@ from datetime import datetime
 
 class KundeBase(BaseModel):
     name: str
-    adresse: str
 
 class KundeCreate(KundeBase):
     pass
 
 class Kunde(KundeBase):
     id: int
-    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -28,7 +26,6 @@ class StandortCreate(StandortBase):
 
 class Standort(StandortBase):
     id: int
-    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -43,7 +40,6 @@ class AbteilungCreate(AbteilungBase):
 
 class Abteilung(AbteilungBase):
     id:int
-    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -58,7 +54,6 @@ class AnlageCreate(AnlageBase):
 
 class Anlage(AnlageBase):
     id:int
-    created_at: datetime
 
     class Config:
         from_attributes = True

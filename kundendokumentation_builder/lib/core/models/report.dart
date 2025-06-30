@@ -1,19 +1,29 @@
 class Report {
-  final String id;
-  final String title;
-  final DateTime createdAt;
+  final String titel;
+  final String beschreibung;
+  final String status;
+  final DateTime datum;
+  final int anlageId;
+  final String messwerte;
+  final List<String> bilder; // Base64 oder URLs
 
-  Report({required this.id, required this.title, required this.createdAt});
-
-  factory Report.fromJson(Map<String, dynamic> json) => Report(
-    id: json['id'],
-    title: json['title'],
-    createdAt: DateTime.parse(json['createdAt']),
-  );
+  Report({
+    required this.titel,
+    required this.beschreibung,
+    required this.status,
+    required this.datum,
+    required this.anlageId,
+    required this.messwerte,
+    required this.bilder,
+  });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'createdAt': createdAt.toIso8601String(),
+    'titel': titel,
+    'beschreibung': beschreibung,
+    'status': status,
+    'datum': datum.toIso8601String(),
+    'anlage_id': anlageId,
+    'wert': messwerte,
+    'bilder': bilder,
   };
 }

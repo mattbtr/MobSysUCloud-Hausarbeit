@@ -50,3 +50,10 @@ def delete_standort(standort_id: int, db: Session = Depends(get_db)):
     db.delete(standort)
     db.commit()
     return {"detail": "Standort gelöscht"}
+
+# get Standorte zu einem bestimmten Kunden (KundenId)
+@router.get("/kunde/{kunde_id}", response_model=List[schemas.Standort])
+def get_standorte_by_kunde(kunde_id: int, db: Session = Depends(get_db)):
+    standorte = db.query(models.Standort).filter(models.Standort.kunde_id == kunde_id).all()
+    return standorte
+

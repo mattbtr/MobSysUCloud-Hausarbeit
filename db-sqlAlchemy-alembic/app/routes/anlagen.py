@@ -49,3 +49,9 @@ def delete_anlage(anlage_id: int, db: Session = Depends(get_db)):
     db.delete(anlage)
     db.commit()
     return {"detail": "Anlage gelöscht"}
+
+# get alle Anlagen zu bestimmter Abteilung (abteilungId)
+@router.get("/abteilung/{abteilung_id}", response_model=List[schemas.Anlage])
+def get_anlagen_by_abteilung(abteilung_id: int, db: Session = Depends(get_db)):
+    anlagen = db.query(models.Anlage).filter(models.Anlage.abteilung_id == abteilung_id).all()
+    return anlagen

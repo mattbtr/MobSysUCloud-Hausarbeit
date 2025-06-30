@@ -49,3 +49,9 @@ def delete_abteilung(abteilung_id: int, db: Session = Depends(get_db)):
     db.delete(abteilung)
     db.commit()
     return {"detail": "Abteilung gelöscht"}
+
+
+@router.get("/standort/{standort_id}", response_model=List[schemas.Abteilung])
+def get_abteilungen_by_standort(standort_id: int, db: Session = Depends(get_db)):
+    abteilungen = db.query(models.Abteilung).filter(models.Abteilung.standort_id == standort_id).all()
+    return abteilungen

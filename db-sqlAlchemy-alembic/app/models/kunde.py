@@ -9,4 +9,4 @@ class Kunde(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
 
-    standorte = relationship("Standort", backref="kunde", cascade="all, delete-orphan")
+    #standorte = relationship("Standort", backref="kunde", cascade="all, delete-orphan")
