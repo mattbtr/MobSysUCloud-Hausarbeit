@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -9,6 +9,14 @@ from fastapi import Form, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 import os
 import uuid
+import requests
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+import io
+
+
+router = APIRouter()
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -151,3 +159,74 @@ async def upload_image_eintrag(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{bericht_id}/export/pdf")
+def export_bericht_pdf(bericht_id: int, db: Session = Depends(get_db)):
+    # Bericht und Einträge aus der DB laden
+    bericht = db.query(models.Bericht).filter(models.Bericht.id == bericht_id).first()
+    if not bericht:
+        raise HTTPException(status_code=404, detail="Bericht nicht gefunden")
+    
+    eintraege = db.query(models.Eintrag).filter(models.Eintrag.bericht_id == bericht_id).all()
+
+    # PDF im Speicher erzeugen
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Titel und Metadaten
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(50, height - 50, f"Bericht: {bericht.titel}")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, height - 80, f"Erstellt am: {bericht.erstellt_am.strftime('%d.%m.%Y %H:%M')}")
+    c.drawString(50, height - 100, f"Beschreibung: {bericht.beschreibung}")
+
+    y = height - 140
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, "Einträge:")
+    y -= 20
+
+    c.setFont("Helvetica", 12)
+    for eintrag in eintraege:
+        if y < 120:
+            c.showPage()
+            y = height - 50
+            c.setFont("Helvetica", 12)
+        c.drawString(65, y, f"- {eintrag.titel}")
+        y -= 18
+        if eintrag.beschreibung:
+            c.drawString(80, y, f"Beschreibung: {eintrag.beschreibung}")
+            y -= 16
+        if eintrag.wert:
+            # Prüfe, ob Wert ein Bildpfad ist
+            if any(eintrag.wert.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png"]):
+                bild_url = f"http://192.168.0.108:8000{eintrag.wert}" if eintrag.wert.startswith("/uploads/") else eintrag.wert
+                try:
+                    response = requests.get(bild_url, timeout=10)
+                    if response.status_code == 200:
+                        img = ImageReader(io.BytesIO(response.content))
+                        c.drawImage(img, 80, y-110, width=150, height=100)
+                        y -= 110
+                    else:
+                        c.drawString(80, y, f"[Bild konnte nicht geladen werden: {bild_url}]")
+                        y -= 16
+                except Exception as e:
+                    c.drawString(80, y, f"[Bild-Fehler: {e}]")
+                    y -= 16
+            else:
+                c.drawString(80, y, f"Wert: {eintrag.wert}")
+                y -= 16
+        y -= 4
+
+    c.save()
+    buffer.seek(0)
+    pdf_bytes = buffer.read()
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename=bericht_{bericht_id}.pdf"
+        }
+    )

@@ -25,7 +25,7 @@ class AppRoutes {
     
     reportDetail: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      print('Argumente: $args'); // <-- Debug-Ausgabe
+      debugPrint('Argumente: $args'); // <-- Debug-Ausgabe
       if (args is Map<String, dynamic> && args['id'] != null) {
         return ReportDetailScreen(reportId: args['id'] as int);
       }

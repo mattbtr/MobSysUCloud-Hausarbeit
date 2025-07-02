@@ -45,35 +45,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
   }
 
   void _showExportOptions(BuildContext context) {
-    if (report == null) return;
+    if (report == null || report!.id == null) return;
     showModalBottomSheet(
       context: context,
-      builder:
-          (_) => ExportDialog(
-            reportData: {
-              'title': report!.titel,
-              'date': report!.datum.toString(),
-              'kunde': stammdaten?.kunde,
-              'standort': stammdaten?.standort,
-              'abteilung': stammdaten?.abteilung,
-              'anlage': stammdaten?.anlage,
-              'entries':
-                  eintraege
-                      .map(
-                        (e) => {
-                          'title': e.titel,
-                          'note': e.beschreibung ?? '',
-                          'hasImage': e.hasImage ?? false,
-                        },
-                      )
-                      .toList(),
-            },
-          ),
+      builder: (_) => ExportDialog(reportId: report!.id!),
     );
   }
 
   void _editReport(BuildContext context, int reportId) {
-    // TODO: Navigation zum Bearbeitungsbildschirm
     Navigator.pushNamed(
       context,
       AppRoutes.upload,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:kundendokumentation_builder/core/routes.dart';
-import 'package:kundendokumentation_builder/features/report/visualization_screen.dart';
 import '../../core/models/report.dart';
 import '../../core/services/report_service.dart';
 
@@ -21,6 +20,7 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
   ];
   List<Report> reports = [];
   bool isLoading = false;
+
 
   @override
   void initState() {
@@ -71,24 +71,57 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
   }
 
   void _deleteReport(int index) async {
-    // Hier müsstest du eigentlich die ID des Berichts übergeben,
-    // aber dein Report-Model hat aktuell keine ID.
-    // Wenn du eine ID brauchst, musst du das Model anpassen!
-    // Beispiel für den Fall, dass du eine ID hast:
-    // try {
-    //   await ReportService.deleteReport(reports[index].id);
-    //   setState(() => reports.removeAt(index));
-    // } catch (e) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text('Fehler beim Löschen: $e')),
-    //   );
-    // }
-    // Da dein Report-Model aktuell keine ID hat, kannst du nur lokal löschen:
-    setState(() => reports.removeAt(index));
+    final report = getFilteredReports()[index];
+    final reportId = report.id;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Bericht löschen?'),
+            content: const Text('Möchtest du diesen Bericht wirklich löschen?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Abbrechen'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Löschen'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ReportService.deleteReport(reportId!);
+      setState(() {
+        reports.removeWhere((r) => r.id == reportId);
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Bericht gelöscht!')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Fehler beim Löschen: $e')));
+    }
   }
 
-  void _goToUpload() {
-    Navigator.pushNamed(context, AppRoutes.upload);
+
+  void _goToUpload(Report report) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.upload,
+      arguments: {'reportId': report.id},
+    );
+  }
+
+
+  void _goToCreateReport() {
+    Navigator.pushNamed(context, AppRoutes.createReport);
   }
 
   void _goToReportDetail(Report report) {
@@ -104,23 +137,11 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
     );
   }
 
-  void _goToVisualization(Report report) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (_) => VisualizationScreen(
-              reportData: {
-                'title': report.titel,
-                'date': report.datum.toString(),
-              },
-            ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final bool forUpload = args is Map && args['forUpload'] == true;
+
     final filteredReports = getFilteredReports();
     return Scaffold(
       appBar: AppBar(title: const Text('Berichte Übersicht')),
@@ -144,6 +165,19 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
               },
             ),
           ),
+
+          if (forUpload)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Bitte wähle einen Bericht für den Datenupload aus.',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+
           // Liste aller Berichte
           Expanded(
             child:
@@ -165,7 +199,17 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
                             subtitle: Text(
                               'Erstellt am: ${report.datum.toLocal().toString().split(' ')[0]}',
                             ),
-                            onTap: () => _goToReportDetail(report),
+                            onTap: () {
+                              if (forUpload) {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.upload,
+                                  arguments: {'reportId': report.id},
+                                );
+                              } else {
+                                _goToReportDetail(report);
+                              }
+                            },
                             trailing: PopupMenuButton<String>(
                               onSelected: (value) {
                                 switch (value) {
@@ -173,10 +217,7 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
                                     _deleteReport(index);
                                     break;
                                   case 'hinzufügen':
-                                    _goToUpload();
-                                    break;
-                                  case 'visualisieren':
-                                    _goToVisualization(report);
+                                    _goToUpload(report);
                                     break;
                                   case 'pdf':
                                     _goToReportDetail(report);
@@ -188,10 +229,6 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
                                     const PopupMenuItem(
                                       value: 'hinzufügen',
                                       child: Text('Daten hinzufügen'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'visualisieren',
-                                      child: Text('Visualisieren'),
                                     ),
                                     const PopupMenuItem(
                                       value: 'pdf',
@@ -210,10 +247,12 @@ class _ReportsOverviewScreenState extends State<ReportsOverviewScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _goToUpload,
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _goToCreateReport,
+        label: const Text('Neuer Bericht'),
+        icon: const Icon(Icons.add),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

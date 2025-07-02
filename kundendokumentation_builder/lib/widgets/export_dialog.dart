@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kundendokumentation_builder/core/services/export_service.dart';
+import 'package:kundendokumentation_builder/core/services/pdf_export_service.dart';
 
 class ExportDialog extends StatelessWidget {
-  final Map<String, dynamic> reportData;
+  final int reportId;
 
-  const ExportDialog({super.key, required this.reportData});
+  const ExportDialog({super.key, required this.reportId});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,13 @@ class ExportDialog extends StatelessWidget {
             title: const Text('Als PDF exportieren'),
             onTap: () async {
               Navigator.pop(context);
-              await ExportService.exportAsPDF(reportData);
+              await PdfExportService.exportAsPDF(
+                reportId,
+                onError:
+                    (msg) => ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(msg))),
+              );
             },
           ),
           ListTile(
@@ -25,7 +31,13 @@ class ExportDialog extends StatelessWidget {
             title: const Text('Als PDF exportieren & per E-Mail senden'),
             onTap: () async {
               Navigator.pop(context);
-              await ExportService.exportAndSendEmail(reportData);
+              await PdfExportService.exportAndSendEmail(
+                reportId,
+                onError:
+                    (msg) => ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(msg))),
+              );
             },
           ),
           ListTile(

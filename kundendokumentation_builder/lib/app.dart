@@ -11,6 +11,8 @@ class MainApp extends StatelessWidget {
       title: 'Kundendokumentation Builder',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
+      darkTheme: ThemeData.dark(),
+      themeMode: ThemeMode.system,
       home: AuthLogic(), // Start-Widget abhängig vom Login-Status
       routes: AppRoutes.routes,
     );

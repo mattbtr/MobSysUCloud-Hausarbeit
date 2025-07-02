@@ -53,13 +53,11 @@ class ReportService {
     }
   }
 
-
-  // Optional: Löschen eines Berichts
-  static Future<void> deleteReport(int id) async {
-    final url = Uri.parse('http://192.168.0.108:8000/berichte/$id/');
+  static Future<void> deleteReport(int reportId) async {
+    final url = Uri.parse('http://192.168.0.108:8000/berichte/$reportId');
     final response = await http.delete(url);
 
-    if (response.statusCode != 200 && response.statusCode != 204) {
+    if (response.statusCode != 200) {
       throw Exception('Fehler beim Löschen des Berichts: ${response.body}');
     }
   }
