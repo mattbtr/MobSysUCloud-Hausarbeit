@@ -10,9 +10,9 @@ class Bericht(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     titel = Column(String, nullable=False)
-    beschreibung = Column(Text, nullable=True)
+    beschreibung = Column(Text, nullable=False)
 
-    erstellt_am = Column(DateTime(timezone=True), server_default=func.now())
+    erstellt_am = Column(DateTime(timezone=True), nullable=False)
 
     # Verknüpfung zur Anlage (Pflicht)
     anlage_id = Column(Integer, ForeignKey('anlagen.id'), nullable=False)

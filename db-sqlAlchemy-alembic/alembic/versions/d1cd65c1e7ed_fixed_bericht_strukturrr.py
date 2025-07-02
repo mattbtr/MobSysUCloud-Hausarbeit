@@ -1,8 +1,8 @@
-"""angepasste models und schemas
+"""fixed bericht strukturrr
 
-Revision ID: 15a3d305dec7
-Revises: 8cafad297015
-Create Date: 2025-06-23 14:33:24.220888
+Revision ID: d1cd65c1e7ed
+Revises: ffc1caced433
+Create Date: 2025-06-30 18:47:58.316817
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '15a3d305dec7'
-down_revision: Union[str, None] = '8cafad297015'
+revision: str = 'd1cd65c1e7ed'
+down_revision: Union[str, None] = 'ffc1caced433'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

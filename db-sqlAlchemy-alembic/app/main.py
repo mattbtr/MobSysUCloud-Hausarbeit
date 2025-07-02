@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+import os
 from app.database import engine
 from app import models
 #from app.firebase_auth import firebase_auth_setup
@@ -8,6 +10,12 @@ from app.routes import kunden, standorte, abteilungen, anlagen, berichte
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Mount für statische Dateien
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 @app.get("/")
 def root():

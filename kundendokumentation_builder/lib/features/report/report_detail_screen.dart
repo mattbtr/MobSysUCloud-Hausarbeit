@@ -1,86 +1,185 @@
 import 'package:flutter/material.dart';
+import 'package:kundendokumentation_builder/core/routes.dart';
 import 'package:kundendokumentation_builder/widgets/export_dialog.dart';
+import '../../core/models/report.dart';
+import '../../core/models/eintrag.dart';
+import '../../core/models/stammdaten.dart';
+import '../../core/services/report_service.dart';
 
-class ReportDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> report;
+class ReportDetailScreen extends StatefulWidget {
+  final int reportId;
 
-  const ReportDetailScreen({super.key, required this.report});
+  const ReportDetailScreen({super.key, required this.reportId});
 
-  void _showExportOptions(
-    BuildContext context,
-    Map<String, dynamic> reportData,
-  ) {
+  @override
+  State<ReportDetailScreen> createState() => _ReportDetailScreenState();
+}
+
+class _ReportDetailScreenState extends State<ReportDetailScreen> {
+  Report? report;
+  List<Eintrag> eintraege = [];
+  Stammdaten? stammdaten;
+  bool isLoading = true;
+  String error = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+      error = '';
+    });
+    try {
+      report = await ReportService.fetchReport(widget.reportId);
+      eintraege = await ReportService.fetchEintraege(widget.reportId);
+      stammdaten = await ReportService.fetchStammdaten(widget.reportId);
+    } catch (e) {
+      setState(() => error = 'Fehler beim Laden: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _showExportOptions(BuildContext context) {
+    if (report == null) return;
     showModalBottomSheet(
       context: context,
-      builder: (_) => ExportDialog(reportData: reportData),
+      builder:
+          (_) => ExportDialog(
+            reportData: {
+              'title': report!.titel,
+              'date': report!.datum.toString(),
+              'kunde': stammdaten?.kunde,
+              'standort': stammdaten?.standort,
+              'abteilung': stammdaten?.abteilung,
+              'anlage': stammdaten?.anlage,
+              'entries':
+                  eintraege
+                      .map(
+                        (e) => {
+                          'title': e.titel,
+                          'note': e.beschreibung ?? '',
+                          'hasImage': e.hasImage ?? false,
+                        },
+                      )
+                      .toList(),
+            },
+          ),
     );
   }
 
-  void _editReport(BuildContext context) {
+  void _editReport(BuildContext context, int reportId) {
     // TODO: Navigation zum Bearbeitungsbildschirm
-    Navigator.pushNamed(context, '/edit_report');
+    Navigator.pushNamed(
+      context,
+      AppRoutes.upload,
+      arguments: {'reportId': reportId},
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Beispielhafte Strukturdaten (Placeholder für spätere dynamische Inhalte)
-    final reportTitle = report['title'] ?? 'Bericht ohne Titel';
-    final customer = report['customer'] ?? 'Musterkunde';
-    final location = report['location'] ?? 'Standort A';
-    final department = report['department'] ?? 'Abteilung B';
-    final system = report['system'] ?? 'Anlage C';
-    final timestamp = report['date'] ?? '2025-06-16';
-
-    final entries = report['entries'] as List<Map<String, dynamic>>? ?? [];
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (error.isNotEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Fehler')),
+        body: Center(child: Text(error)),
+      );
+    }
+    if (report == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Bericht nicht gefunden')),
+        body: const Center(child: Text('Bericht nicht gefunden')),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(title: Text(reportTitle)),
+      appBar: AppBar(title: Text(report!.titel)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Kunde: $customer',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Kunde: ${stammdaten?.kunde['name'] ?? 'Unbekannt'}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            Text('Standort: $location'),
-            Text('Abteilung: $department'),
-            Text('Anlage: $system'),
+            Text('Standort: ${stammdaten?.standort['name'] ?? 'Unbekannt'}'),
+            Text('Abteilung: ${stammdaten?.abteilung['name'] ?? 'Unbekannt'}'),
+            Text('Anlage: ${stammdaten?.anlage['name'] ?? 'Unbekannt'}'),
             const SizedBox(height: 8),
             Text(
-              'Erstellt am: $timestamp',
+              'Erstellt am: ${report!.datum.toLocal().toString().split(' ')[0]}',
               style: const TextStyle(color: Colors.grey),
             ),
-
             const Divider(height: 24),
-
-            Text('Einträge', style: Theme.of(context).textTheme.titleLarge),
+            const Text(
+              'Einträge',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-
             Expanded(
               child:
-                  entries.isNotEmpty
+                  eintraege.isNotEmpty
                       ? ListView.separated(
-                        itemCount: entries.length,
+                        itemCount: eintraege.length,
                         separatorBuilder: (_, __) => const Divider(),
                         itemBuilder: (context, index) {
-                          final entry = entries[index];
+                          final entry = eintraege[index];
+                          final isImage =
+                              entry.wert != null &&
+                              (entry.wert!.startsWith('/uploads/') ||
+                                  entry.wert!.contains('.jpg') ||
+                                  entry.wert!.contains('.png') ||
+                                  entry.wert!.contains('.jpeg'));
+
                           return ListTile(
-                            title: Text(entry['title'] ?? 'Eintrag $index'),
-                            subtitle: Text(entry['note'] ?? ''),
-                            trailing:
-                                entry['hasImage'] == true
-                                    ? const Icon(
-                                      Icons.image,
-                                      color: Colors.blue,
-                                    )
-                                    : null,
+                            title: Text(entry.titel),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (entry.beschreibung != null &&
+                                    entry.beschreibung!.isNotEmpty)
+                                  Text(entry.beschreibung!),
+                                if (isImage)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Image.network(
+                                      'http://192.168.0.108:8000${entry.wert}',
+                                      width: 200,
+                                      height: 150,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) => const Text(
+                                            'Bild konnte nicht geladen werden',
+                                          ),
+                                    ),
+                                  ),
+                                if (!isImage &&
+                                    entry.wert != null &&
+                                    entry.wert!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text('Wert: ${entry.wert}'),
+                                  ),
+                              ],
+                            ),
                           );
                         },
                       )
                       : const Text('Keine Einträge vorhanden.'),
             ),
+
           ],
         ),
       ),
@@ -95,12 +194,20 @@ class ReportDetailScreen extends StatelessWidget {
               label: const Text('Zurück'),
             ),
             ElevatedButton.icon(
-              onPressed: () => _editReport(context),
+              onPressed: () {
+                if (report!.id != null) {
+                  _editReport(context, report!.id!);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Bericht hat keine ID!')),
+                  );
+                }
+              },
               icon: const Icon(Icons.edit),
               label: const Text('Bearbeiten'),
             ),
             ElevatedButton.icon(
-              onPressed: () => _showExportOptions(context, report),
+              onPressed: () => _showExportOptions(context),
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text('Export'),
             ),

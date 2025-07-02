@@ -9,10 +9,6 @@ import '../../core/services/standort_service.dart';
 import '../../core/services/abteilung_service.dart';
 import '../../core/services/anlagen_service.dart';
 import '../../core/services/report_service.dart';
-import 'dart:convert';
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 
 class CreateReportScreen extends StatefulWidget {
   const CreateReportScreen({super.key});
@@ -22,7 +18,10 @@ class CreateReportScreen extends StatefulWidget {
 }
 
 class _CreateReportScreenState extends State<CreateReportScreen> {
+  // ignore: unused_field
   final _formKey = GlobalKey<FormState>();
+  final _formKeyStep0 = GlobalKey<FormState>();
+  final _formKeyStep1 = GlobalKey<FormState>();
   int _currentStep = 0;
 
   // Auswahlobjekte
@@ -40,13 +39,20 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   // Formularfelder
   String titel = '';
   String beschreibung = '';
-  String messwerte = '';
   DateTime selectedDate = DateTime.now();
 
   // Ladezustände prüfen
   bool isLoadingStandorte = false;
   bool isLoadingAbteilungen = false;
   bool isLoadingAnlagen = false;
+
+  // Bericht Zustände
+  // ignore: unused_field
+  bool _isSubmitting = false;
+  // ignore: unused_field
+  bool _isReportSaved = false;
+  // ignore: unused_field
+  int? _reportId; // Speichert die ID des erstellten Reports
 
   @override
   void initState() {
@@ -116,160 +122,88 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   Future<void> _submitReport() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+    print('SubitReport aufgerufen');
+    print(titel);
+    print(beschreibung);
+    print(selectedDate);
+    print(selectedAnlage?.id);
 
-      final report = Report(
-        titel: titel,
-        beschreibung: beschreibung,
-        datum: selectedDate,
-        messwerte: messwerte,
-        status: "OK", // Optional
-        bilder: [],
-        anlageId: selectedAnlage!.id,
+    if (selectedAnlage == null || titel.isEmpty || beschreibung.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bitte alle Felder ausfüllen")),
       );
-
-      try {
-        await ReportService.submitReport(report);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Bericht gespeichert")));
-        Navigator.pop(context);
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Fehler: $e")));
-      }
-    }
-  }
-
-  List<Map<String, dynamic>> jsonEntries = []; // NEU
-
-  Future<void> _pickJsonFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-    );
-
-    if (result != null && result.files.single.path != null) {
-      final file = File(result.files.single.path!);
-      final contents = await file.readAsString();
-
-      try {
-        final decoded = json.decode(contents);
-
-        if (decoded is List && decoded.length <= 3) {
-          jsonEntries = decoded.cast<Map<String, dynamic>>();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("JSON erfolgreich geladen")),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Maximal 3 Einträge erlaubt")),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Fehler beim Parsen: $e")));
-      }
-    }
-  }
-
-  final ImagePicker _imagePicker = ImagePicker();
-  List<Map<String, dynamic>> selectedImages = []; // NEU
-
-  Future<void> _pickImages() async {
-    if (selectedImages.length >= 3) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Maximal 3 Bilder erlaubt")));
       return;
     }
+    
+    setState(() => _isSubmitting = true);
 
-    final XFile? pickedFile = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
+    final report = Report(
+      titel: titel,
+      beschreibung: beschreibung,
+      datum: selectedDate,
+      anlageId: selectedAnlage!.id,
     );
 
-    if (pickedFile != null) {
-      final titleController = TextEditingController();
-      final descController = TextEditingController();
+    try {
+      final result = await ReportService.submitReport(report);
+      _reportId = result;
+      setState(() {
+        _isReportSaved = true;
+      });
 
-      await showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text("Bildinfos eingeben"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(labelText: "Titel"),
-                ),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(labelText: "Beschreibung"),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // abbrechen
-                },
-                child: const Text("Abbrechen"),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (titleController.text.isNotEmpty) {
-                    selectedImages.add({
-                      "path": pickedFile.path,
-                      "title": titleController.text,
-                      "description": descController.text,
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Bild hinzugefügt")),
-                    );
-                  }
-                },
-                child: const Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Bericht gespeichert")));
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Fehler: $e")));
+    } finally {
+      setState(() => _isSubmitting = false);
     }
+    
   }
 
-
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Bericht erstellen")),
-      body: Form(
-        key: _formKey,
-        child: Stepper(
-          currentStep: _currentStep,
-          onStepContinue: () {
-            if (_currentStep < 2) {
+      body: Stepper(
+        currentStep: _currentStep,
+        onStepContinue: () {
+          if (_currentStep == 0) {
+            if (_formKeyStep0.currentState!.validate()) {
+              _formKeyStep0.currentState!.save();
+              setState(() => _currentStep++);
+            }
+          } else if (_currentStep == 1) {
+            if (_formKeyStep1.currentState!.validate()) {
+              _formKeyStep1.currentState!.save();
               setState(() => _currentStep++);
             } else {
-              _submitReport();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Bitte alle Berichtfelder ausfüllen"),
+                ),
+              );
             }
-          },
-          onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep--);
-            }
-          },
-          steps: [
-            Step(
-              title: const Text("Stammdaten"),
-              content: Column(
+          } else {
+            _submitReport();
+          }
+        },
+        onStepCancel: () {
+          if (_currentStep > 0) {
+            setState(() => _currentStep--);
+          }
+        },
+        steps: [
+          Step(
+            title: const Text("Stammdaten"),
+            content: Form(
+              key: _formKeyStep0,
+              child: Column(
                 children: [
                   DropdownButtonFormField<Kunde>(
                     decoration: const InputDecoration(labelText: "Kunde"),
@@ -301,10 +235,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                             )
                             .toList(),
                     value: selectedStandort,
-                    onChanged: isLoadingStandorte || standorte.isEmpty ? null : (val) {
-                      setState(() => selectedStandort = val);
-                      _loadAbteilungen(val!.id);
-                    },
+                    onChanged:
+                        isLoadingStandorte || standorte.isEmpty
+                            ? null
+                            : (val) {
+                              setState(() => selectedStandort = val);
+                              _loadAbteilungen(val!.id);
+                            },
                     validator: (val) => val == null ? "Standort wählen" : null,
                   ),
                   DropdownButtonFormField<Abteilung>(
@@ -319,10 +256,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                             )
                             .toList(),
                     value: selectedAbteilung,
-                    onChanged: isLoadingAbteilungen || abteilungen.isEmpty ? null : (val) {
-                      setState(() => selectedAbteilung = val);
-                      _loadAnlagen(val!.id);
-                    },
+                    onChanged:
+                        isLoadingAbteilungen || abteilungen.isEmpty
+                            ? null
+                            : (val) {
+                              setState(() => selectedAbteilung = val);
+                              _loadAnlagen(val!.id);
+                            },
                     validator: (val) => val == null ? "Abteilung wählen" : null,
                   ),
                   DropdownButtonFormField<Anlage>(
@@ -337,22 +277,30 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                             )
                             .toList(),
                     value: selectedAnlage,
-                    onChanged: isLoadingAnlagen || anlagen.isEmpty ? null : (val) => setState(() => selectedAnlage = val),
+                    onChanged:
+                        isLoadingAnlagen || anlagen.isEmpty
+                            ? null
+                            : (val) {
+                              setState(() => selectedAnlage = val);
+                            },
                     validator: (val) => val == null ? "Anlage wählen" : null,
                   ),
                 ],
               ),
             ),
-            Step(
-              title: const Text("Bericht-Keynotes"),
-              content: Column(
+          ),
+          Step(
+            title: const Text("Bericht"),
+            content: Form(
+              key: _formKeyStep1,
+              child: Column(
                 children: [
                   TextFormField(
                     decoration: const InputDecoration(labelText: "Titel"),
                     onSaved: (val) => titel = val ?? '',
                     validator:
                         (val) =>
-                            val == null || val.isEmpty
+                            val == null || val.trim().isEmpty
                                 ? "Titel erforderlich"
                                 : null,
                   ),
@@ -362,7 +310,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                     ),
                     maxLines: 3,
                     onSaved: (val) => beschreibung = val ?? '',
-                  ),               
+                    validator:
+                        (val) =>
+                            val == null || val.trim().isEmpty
+                                ? "Beschreibung erforderlich"
+                                : null,
+                  ),
                   TextButton.icon(
                     icon: const Icon(Icons.calendar_today),
                     label: Text(
@@ -383,43 +336,16 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 ],
               ),
             ),
-            Step(
-              title: const Text("Einträge (JSON)"), // NEU
-              content: Column(
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text("JSON-Datei hochladen"),
-                    onPressed: _pickJsonFile, // NEU
-                  ),
-                  Text("0–3 strukturierte Einträge"), // NEU
-                ],
-              ),
+          ),
+          Step(
+            title: const Text("Fertig"),
+            content: const Text(
+              "Überprüfe deine Eingaben und speichere den Bericht.",
             ),
-            Step(
-              title: const Text("Bilder"), // NEU
-              content: Column(
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.image),
-                    label: const Text("Bild auswählen"),
-                    onPressed: _pickImages, // NEU
-                  ),
-                  Text("Max. 3 Bilder mit Titel & Beschreibung"), // NEU
-                ],
-              ),
-            ),
-
-
-            Step(
-              title: const Text("Fertig"),
-              content: const Text(
-                "Überprüfe deine Eingaben und speichere den Bericht.",
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
 }

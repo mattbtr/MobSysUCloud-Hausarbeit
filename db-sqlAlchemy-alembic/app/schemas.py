@@ -63,6 +63,7 @@ class BerichtBase(BaseModel):
     titel: str
     beschreibung: str
     anlage_id: int
+    erstellt_am: datetime
 
 class BerichtCreate(BerichtBase):
     pass
