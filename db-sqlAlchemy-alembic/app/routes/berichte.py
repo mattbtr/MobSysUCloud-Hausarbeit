@@ -1,6 +1,8 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException, Response
+import tempfile
+from fastapi import APIRouter, Depends, HTTPException, Response, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
@@ -14,6 +16,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import io
+from app.schemas import EmailRequest
 
 
 router = APIRouter()
@@ -22,6 +25,20 @@ UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 router = APIRouter(prefix="/berichte", tags=["Berichte"])
+
+from fastapi_mail import ConnectionConfig
+
+conf = ConnectionConfig(
+    MAIL_USERNAME = "kundendokumentation@gmail.com",
+    MAIL_PASSWORD = "qmrg ozmw jgth cqqc",
+    MAIL_FROM = "kundendokumentation@gmail.com",
+    MAIL_PORT = 587,
+    MAIL_SERVER = "smtp.gmail.com",
+    MAIL_STARTTLS = True,
+    MAIL_SSL_TLS = False,
+    USE_CREDENTIALS = True
+)
+
 
 @router.post("/", response_model=schemas.Bericht)
 def create_bericht(bericht: schemas.BerichtCreate, db: Session = Depends(get_db)):
@@ -230,3 +247,112 @@ def export_bericht_pdf(bericht_id: int, db: Session = Depends(get_db)):
             "Content-Disposition": f"inline; filename=bericht_{bericht_id}.pdf"
         }
     )
+
+async def send_pdf_email(
+    recipient: str,
+    subject: str,
+    body: str,
+    pdf_bytes: bytes,
+    filename: str
+):
+    
+    # Temporäre Datei anlegen
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        tmp_file.write(pdf_bytes)
+        tmp_file_path = tmp_file.name
+    """
+    Versendet eine E-Mail mit PDF-Anhang an den Empfänger.
+    """
+    try:
+        message = MessageSchema(
+            subject=subject,
+            recipients=[recipient],  # Muss eine Liste sein!
+            body=body,
+            attachments=[tmp_file_path],  # Pfad zur temporären Datei
+            subtype="plain"
+    )
+        fm = FastMail(conf)
+        await fm.send_message(message)
+    finally:
+        # Temporäre Datei löschen
+        if os.path.exists(tmp_file_path):
+            os.remove(tmp_file_path)
+
+@router.post("/{bericht_id}/export/email")
+async def export_pdf_and_send_email(
+    bericht_id: int,
+    request: EmailRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    # Bericht und Einträge aus der DB laden
+    bericht = db.query(models.Bericht).filter(models.Bericht.id == bericht_id).first()
+    if not bericht:
+        raise HTTPException(status_code=404, detail="Bericht nicht gefunden")
+    
+    eintraege = db.query(models.Eintrag).filter(models.Eintrag.bericht_id == bericht_id).all()
+
+    # PDF generieren (Beispiel)
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    
+    # Titel und Metadaten
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(50, height - 50, f"Bericht: {bericht.titel}")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, height - 80, f"Erstellt am: {bericht.erstellt_am.strftime('%d.%m.%Y %H:%M')}")
+    c.drawString(50, height - 100, f"Beschreibung: {bericht.beschreibung}")
+
+    y = height - 140
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, "Einträge:")
+    y -= 20
+
+    c.setFont("Helvetica", 12)
+    for eintrag in eintraege:
+        if y < 120:
+            c.showPage()
+            y = height - 50
+            c.setFont("Helvetica", 12)
+        c.drawString(65, y, f"- {eintrag.titel}")
+        y -= 18
+        if eintrag.beschreibung:
+            c.drawString(80, y, f"Beschreibung: {eintrag.beschreibung}")
+            y -= 16
+        if eintrag.wert:
+            # Prüfe, ob Wert ein Bildpfad ist
+            if any(eintrag.wert.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png"]):
+                if eintrag.wert.startswith("/uploads/"):
+                    bild_url = os.path.join("uploads", os.path.basename(eintrag.wert))
+                    if os.path.exists(bild_url):
+                        img = ImageReader(bild_url)
+                        c.drawImage(img, 80, y-110, width=150, height=100)
+                        y -= 110
+                    else:
+                        c.drawString(80, y, f"[Bild konnte nicht geladen werden: {bild_url}]")
+                        y -= 16
+                
+                else:
+                    c.drawString(80, y, f"Wert: {eintrag.wert}")
+                y -= 16
+        y -= 4
+
+    c.save()
+    buffer.seek(0)
+    pdf_bytes = buffer.read()
+
+    # E-Mail-Versand als Background-Task starten
+    subject = "Ihr Bericht als PDF"
+    body = "Im Anhang finden Sie den Bericht als PDF."
+    filename = f"bericht_{bericht_id}.pdf"
+    background_tasks.add_task(
+        send_pdf_email,
+        request.recipient,
+        subject,
+        body,
+        pdf_bytes,
+        filename
+    )
+
+    return {"detail": f"PDF wird an {request.recipient} im Hintergrund gesendet."}

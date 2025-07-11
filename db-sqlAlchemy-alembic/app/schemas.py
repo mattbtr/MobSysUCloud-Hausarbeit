@@ -1,5 +1,5 @@
 # app/schemas.py
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 
@@ -90,3 +90,7 @@ class Eintrag(EintragBase):
 
     class Config:
         from_attributes = True
+
+
+class EmailRequest(BaseModel):
+    recipient: EmailStr

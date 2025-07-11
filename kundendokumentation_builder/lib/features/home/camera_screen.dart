@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:gallery_saver_plus/files.dart';
+//import 'package:path_provider/path_provider.dart';
+//import 'package:gallery_saver_plus/files.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
 
 class CameraScreen extends StatefulWidget {

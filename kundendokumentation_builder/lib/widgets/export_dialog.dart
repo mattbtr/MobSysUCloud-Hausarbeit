@@ -31,13 +31,16 @@ class ExportDialog extends StatelessWidget {
             title: const Text('Als PDF exportieren & per E-Mail senden'),
             onTap: () async {
               Navigator.pop(context);
+              
               await PdfExportService.exportAndSendEmail(
                 reportId,
+                context: context,
                 onError:
                     (msg) => ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(SnackBar(content: Text(msg))),
               );
+              
             },
           ),
           ListTile(
