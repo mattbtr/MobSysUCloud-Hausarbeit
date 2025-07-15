@@ -135,9 +135,9 @@ async def upload_json_eintraege(
             db.add(db_eintrag)
         db.commit()
         return {"detail": "Einträge gespeichert"}
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
-        raise HTTPException(status_code=400, detail="Ungültige JSON-Datei")
+        raise HTTPException(status_code=400, detail="Ungültige JSON-Datei: {e}")
     except Exception as e:
         db.rollback()
         print(f"Exception: {e}")
