@@ -1,0 +1,52 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, develop, feature/devops]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: # erlaubt manuelles Starten im GitHub-UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Install Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        flutter-version: 3.29.3
+    - run: flutter --version
+
+    - name: Load .env form Github Secret
+      run: echo "${{ secrets.FRONTEND_ENV }}" > .env
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Analyze Code
+      run: flutter analyze
+
+    - name: Run tests (unit tests+widget tests)
+      continue-on-error: true
+      run: flutter test
+
+    - name: Locate sdkmanager
+      run: find /usr/local/lib/android/sdk -name sdkmanager
+
+    - name: Accept Android SDK licenses
+      run: yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
+    - name: Build Android APK
+      run: flutter build apk --release
+
+    - name: Upload APK as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+

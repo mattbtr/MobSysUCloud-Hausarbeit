@@ -53,10 +53,12 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           children: [
             TextField(
+              key: const ValueKey('emailField'),
               controller: emailController,
               decoration: const InputDecoration(labelText: 'E-Mail'),
             ), // Textfeld für Email Eingabe
             TextField(
+              key: const ValueKey('passwordField'),
               controller: passwordController,
               decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
@@ -67,6 +69,7 @@ class LoginScreen extends StatelessWidget {
             ), // SizedBox == unsichtbares Abstandswidget --> Abstand von 16 Pixel zwischen Textfeld-PW und Button-Login
             // Button-Login führt Login-Funktion von oben aus
             ElevatedButton(
+              key: const ValueKey('loginButton'),
               onPressed: () => login(context),
               child: const Text('Login'),
             ),

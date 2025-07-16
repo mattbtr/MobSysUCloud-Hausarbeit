@@ -1,0 +1,33 @@
+name: Firestore Backup
+
+on: 
+  schedule:
+  - cron: '0 3 * * 0'   # Jeden Sonntag um 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 22.15.0
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run backup Script
+        run: node firestore-backup.js
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
+
+      - name: Upload Backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firestore-backup
+          path: firestore-backup-*.json

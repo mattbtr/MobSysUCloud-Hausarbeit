@@ -100,20 +100,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: ListView(
           children: [
             TextField(
+              key: const ValueKey('registerEmailField'),
               controller: emailController,
               decoration: const InputDecoration(labelText: 'E-Mail'),
             ),
             TextField(
+              key: const ValueKey('registerPasswordField'),
               controller: passwordController,
               decoration: const InputDecoration(labelText: 'Passwort'),
               obscureText: true,
             ),
             TextField(
+              key: const ValueKey('registerNameField'),
               controller: nameController,
               decoration: const InputDecoration(labelText: 'Vor- und Nachname'),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              key: const ValueKey('registerRoleField'),
               decoration: const InputDecoration(labelText: 'Rolle'),
               value: selectedRole,
               items:
@@ -127,6 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
+              key: const ValueKey('registerAbteilungField'),
               decoration: const InputDecoration(labelText: 'Abteilung'),
               value: selectedDepartment,
               items:
@@ -139,6 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
+              key: const ValueKey('registerButton'),
               onPressed: () => register(context),
               child: const Text("Registrieren"),
             ),
