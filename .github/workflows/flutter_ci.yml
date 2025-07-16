@@ -57,6 +57,7 @@ jobs:
 
     - name: Build Android APK
       run: flutter build apk --release
+      working-directory: kundendokumentation_builder
 
     - name: Upload APK as artifact
       uses: actions/upload-artifact@v4
