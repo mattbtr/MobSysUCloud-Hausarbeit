@@ -15,6 +15,12 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v4
 
+    - name: Print directory & contents
+      run: |
+        pwd
+        ls -la
+        ls -la kundendokumentation_builder
+
     - name: Install Flutter
       uses: subosito/flutter-action@v2
       with:
@@ -24,16 +30,20 @@ jobs:
 
     - name: Load .env form Github Secret
       run: echo "${{ secrets.FRONTEND_ENV }}" > .env
+      working-directory: kundendokumentation_builder
 
     - name: Install dependencies
       run: flutter pub get
+      working-directory: kundendokumentation_builder
 
     - name: Analyze Code
       run: flutter analyze
+      working-directory: kundendokumentation_builder
 
     - name: Run tests (unit tests+widget tests)
       continue-on-error: true
       run: flutter test
+      working-directory: kundendokumentation_builder
 
     - name: Locate sdkmanager
       run: find /usr/local/lib/android/sdk -name sdkmanager
@@ -48,5 +58,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: android-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: kundendokumentation_builder/build/app/outputs/flutter-apk/app-release.apk
 
