@@ -27,9 +27,13 @@ jobs:
 
       - name: Build and start services with Docker Compose
         run: docker compose up -d --build
+      
+      - name: List containers and status
+        run: docker ps -a
 
-      - name: Wait for DB to be ready
-        run: sleep 20
+      - name: Show logs of backend-fastapi (on failure)
+        if: failure()
+        run: docker logs backend-fastapi
 
       - name: Run Alembic migrations inside container
         run: |
