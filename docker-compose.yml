@@ -1,5 +1,6 @@
 services:
   hausarbeit:
+    container_name: backend-fastapi
     image: hausarbeit
     build:
       context: ./db-sqlAlchemy-alembic

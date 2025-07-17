@@ -33,18 +33,15 @@ jobs:
 
       - name: Run Alembic migrations inside container
         run: |
-          CONTAINER_ID=$(docker ps -qf "ancestor=hausarbeit")
-          docker exec $CONTAINER_ID alembic upgrade head
+          docker exec backend-fastapi alembic upgrade head
         working-directory: db-sqlAlchemy-alembic
 
       - name: Run tests inside container
         run: |
-          CONTAINER_ID=$(docker ps -qf "ancestor=hausarbeit")
-          docker exec $CONTAINER_ID pytest
+          docker exec backend-fastapi pytest
         working-directory: db-sqlAlchemy-alembic
 
       - name: Lint with flake8 inside container
         run: |
-          CONTAINER_ID=$(docker ps -qf "ancestor=hausarbeit")
-          docker exec $CONTAINER_ID flake8 .
+          docker exec backend-fastapi flake8 .
         working-directory: db-sqlAlchemy-alembic
