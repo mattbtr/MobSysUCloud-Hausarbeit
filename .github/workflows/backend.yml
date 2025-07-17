@@ -26,7 +26,7 @@ jobs:
         working-directory: db-sqlAlchemy-alembic
 
       - name: Build and start services with Docker Compose
-        run: docker-compose -f db-sqlAlchemy-alembic/docker-compose.yml up -d --build
+        run: docker compose -f db-sqlAlchemy-alembic/docker-compose.yml up -d --build
         working-directory: db-sqlAlchemy-alembic
 
       - name: Wait for DB to be ready
