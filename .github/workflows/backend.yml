@@ -1,0 +1,51 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop, feature/devops]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Print directory & contents
+        run: |
+          pwd
+          ls -la
+          ls -la db-sqlAlchemy-alembic
+
+      - name: Create .env from Secret
+        run: echo "${{ secrets.BACKEND_ENV }}" > .env
+        working-directory: db-sqlAlchemy-alembic
+
+      - name: Build and start services with Docker Compose
+        run: docker-compose -f db-sqlAlchemy-alembic/docker-compose.yml up -d --build
+        working-directory: db-sqlAlchemy-alembic
+
+      - name: Wait for DB to be ready
+        run: sleep 20
+
+      - name: Run Alembic migrations inside container
+        run: |
+          CONTAINER_ID=$(docker ps -qf "ancestor=hausarbeit")
+          docker exec $CONTAINER_ID alembic upgrade head
+        working-directory: db-sqlAlchemy-alembic
+
+      - name: Run tests inside container
+        run: |
+          CONTAINER_ID=$(docker ps -qf "ancestor=hausarbeit")
+          docker exec $CONTAINER_ID pytest
+        working-directory: db-sqlAlchemy-alembic
+
+      - name: Lint with flake8 inside container
+        run: |
+          CONTAINER_ID=$(docker ps -qf "ancestor=hausarbeit")
+          docker exec $CONTAINER_ID flake8 .
+        working-directory: db-sqlAlchemy-alembic
