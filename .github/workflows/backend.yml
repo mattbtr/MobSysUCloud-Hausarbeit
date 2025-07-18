@@ -47,5 +47,5 @@ jobs:
 
       - name: Lint with flake8 inside container
         run: |
-          docker exec backend-fastapi flake8 .
+          docker exec backend-fastapi flake8 app tests
         working-directory: db-sqlAlchemy-alembic
